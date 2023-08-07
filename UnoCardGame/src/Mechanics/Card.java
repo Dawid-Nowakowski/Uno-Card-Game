@@ -1,7 +1,14 @@
 package Mechanics;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) {
+
+    static Comparator<Card> sorting = Comparator.comparing(Card::cardColor)
+            .thenComparing(Card::value)
+            .thenComparing(Card::specialEffect);
 
     public enum CardColor {
         BLUE, GREEN, RED, YELLOW, NONE;
@@ -12,11 +19,10 @@ public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) 
     }
 
     public enum SpecialEffect {
-        NONE, REVERSE, SHUFFLE, WILD, SKIP, DRAW2, DRAW4;
+        DRAW2, REVERSE, SKIP, DRAW4, SHUFFLE, WILD, NONE;
 
         public String getSpecial() {
-            return (new String[]{"", "\u21BA", "\uD83C\uDF00", "\uD83C\uDF08", "\uD83D\uDEC7",
-                    "+2\uD83C\uDF08", "+4\uD83C\uDF08"})[this.ordinal()];
+            return (new String[]{"+2", "\u21BA", "\uD83D\uDEC7", "+4\uD83C\uDF08", "\uD83C\uDF00", "\uD83C\uDF08", ""})[this.ordinal()];
         }
     }
 
@@ -26,9 +32,9 @@ public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) 
             return "%s%d".formatted(cardColor.getColor(), value);
         } else if (specialEffect() == SpecialEffect.DRAW2 || specialEffect() == SpecialEffect.REVERSE
                 || specialEffect() == SpecialEffect.SKIP) {
-            return "%s%s(%d)".formatted(cardColor.getColor(), specialEffect.getSpecial(), value);
+            return "%s%s".formatted(cardColor.getColor(), specialEffect.getSpecial());
         } else {
-            return "%s(%d)".formatted(specialEffect.getSpecial(), value);
+            return specialEffect.getSpecial();
         }
     }
 
@@ -49,14 +55,53 @@ public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) 
                     default -> 50;
                 });
             }
-        }
-        else {
-                if (specialEffect == SpecialEffect.DRAW2 || specialEffect == SpecialEffect.SKIP ||
-                        specialEffect == SpecialEffect.REVERSE) {
-                    return new Card(cardColor, specialEffect, 20);
-                }
+        } else {
+            if (specialEffect == SpecialEffect.DRAW2 || specialEffect == SpecialEffect.SKIP ||
+                    specialEffect == SpecialEffect.REVERSE) {
+                return new Card(cardColor, specialEffect, 20);
             }
+        }
         System.out.println("Invalid Special Card: " + specialEffect);
         return null;
+    }
+
+    public static List<Card> getDeck() {
+        CardColor[] cardColors = CardColor.values();
+        SpecialEffect[] specialEffects = SpecialEffect.values();
+        List<Card> deck = new ArrayList<>();
+
+        for (CardColor color : cardColors) {
+            if (color.ordinal() == 4) {
+                break;
+            }
+            for (int j = 0; j <= 9; j++) {
+                deck.add(Card.getNumericCard(color, j));
+                if (j != 0) {
+                    deck.add(Card.getNumericCard(color, j));
+                }
+            }
+            for (int i = 0; i < 3; i++) {
+                SpecialEffect sEffect = specialEffects[i];
+                deck.add(Card.getSpecialCard(color, sEffect));
+                deck.add(Card.getSpecialCard(color, sEffect));
+            }
+            deck.add(Card.getSpecialCard(CardColor.NONE, specialEffects[3]));
+            deck.add(Card.getSpecialCard(CardColor.NONE, specialEffects[4]));
+            deck.add(Card.getSpecialCard(CardColor.NONE, specialEffects[5]));
+        }
+        return deck;
+    }
+
+    public static void printDeck(List<Card> deck) {
+        int cardsInColor = deck.size() / 4;
+
+        for (int i = 0; i < 4; i++) {
+
+            int startIndex = i * cardsInColor;
+            int endIndex = startIndex + cardsInColor;
+            deck.subList(startIndex, endIndex - 1).forEach(c -> System.out.print(c + ", "));
+            System.out.print(deck.get(endIndex - 1));
+            System.out.println();
+        }
     }
 }

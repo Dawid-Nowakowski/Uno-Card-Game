@@ -2,6 +2,8 @@ public class Info {
 
     public static final String RULES = """
                 RULES:
+                
+                For: 2-10 Players.
                                 
                 The game starts by dealing 7 cards to each player. After that, the top card from the remaining deck
                 is flipped over and set aside to begin the discard pile. In the original rules, the youngest player
