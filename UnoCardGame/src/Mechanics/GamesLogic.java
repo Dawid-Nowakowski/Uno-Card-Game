@@ -22,9 +22,15 @@ public class GamesLogic {
                 playerHand.sort(Card.sorting);
                 playersDecks.add(playerHand);
             }
+            for(var d : playersDecks){
+                for(var c : d){
+                    deck.remove(c);
+                }
+            }
         } else {
             System.out.println("Invalid amount of players: " + playersAmount + "\nRequired amount: 2-10");
         }
         return playersDecks;
     }
+
 }

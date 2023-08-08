@@ -6,7 +6,7 @@ import java.util.List;
 
 public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) {
 
-    static Comparator<Card> sorting = Comparator.comparing(Card::cardColor)
+    public static Comparator<Card> sorting = Comparator.comparing(Card::cardColor)
             .thenComparing(Card::value)
             .thenComparing(Card::specialEffect);
 
@@ -34,7 +34,7 @@ public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) 
                 || specialEffect() == SpecialEffect.SKIP) {
             return "%s%s".formatted(cardColor.getColor(), specialEffect.getSpecial());
         } else {
-            return specialEffect.getSpecial();
+            return "%s".formatted(specialEffect.getSpecial());
         }
     }
 
@@ -93,14 +93,16 @@ public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) 
     }
 
     public static void printDeck(List<Card> deck) {
-        int cardsInColor = deck.size() / 4;
-
+        int cardsInColor = (int) Math.ceil((double) deck.size() / 4);
         for (int i = 0; i < 4; i++) {
 
             int startIndex = i * cardsInColor;
             int endIndex = startIndex + cardsInColor;
-            deck.subList(startIndex, endIndex - 1).forEach(c -> System.out.print(c + ", "));
-            System.out.print(deck.get(endIndex - 1));
+
+            if (endIndex > deck.size()) {
+                endIndex = deck.size();
+            }
+            deck.subList(startIndex, endIndex).forEach(c -> System.out.print(c + ", "));
             System.out.println();
         }
     }
