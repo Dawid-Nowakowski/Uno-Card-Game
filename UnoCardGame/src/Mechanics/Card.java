@@ -4,11 +4,49 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) {
+public class Card {
 
-    public static Comparator<Card> sorting = Comparator.comparing(Card::cardColor)
-            .thenComparing(Card::value)
-            .thenComparing(Card::specialEffect);
+    private CardColor cardColor;
+    private SpecialEffect specialEffect;
+    private int value;
+
+    public Card(CardColor cardColor, SpecialEffect specialEffect, int value) {
+        this.cardColor = cardColor;
+        this.specialEffect = specialEffect;
+        this.value = value;
+    }
+
+    public CardColor getCardColor() {
+        return cardColor;
+    }
+
+    public void setCardColor(CardColor cardColor) {
+        this.cardColor = cardColor;
+    }
+
+    public SpecialEffect getSpecialEffect() {
+        return specialEffect;
+    }
+
+    public void setSpecialEffect(SpecialEffect specialEffect) {
+        this.specialEffect = specialEffect;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
+    }
+
+    public static Comparator<Card> sorting = Comparator.comparing(Card::getCardColor)
+            .thenComparing(Card::getValue)
+            .thenComparing(Card::getSpecialEffect);
+
+    public static Comparator<Card> matchingColor = Comparator.comparing(Card::getCardColor);
+    public static Comparator<Card> matchingValue = Comparator.comparing(Card::getValue);
+    public static Comparator<Card> matchingSE = Comparator.comparing(Card::getSpecialEffect);
 
     public enum CardColor {
         BLUE, GREEN, RED, YELLOW, NONE;
@@ -28,10 +66,10 @@ public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) 
 
     @Override
     public String toString() {
-        if (specialEffect() == SpecialEffect.NONE) {
+        if (getSpecialEffect() == SpecialEffect.NONE) {
             return "%s%d".formatted(cardColor.getColor(), value);
-        } else if (specialEffect() == SpecialEffect.DRAW2 || specialEffect() == SpecialEffect.REVERSE
-                || specialEffect() == SpecialEffect.SKIP) {
+        } else if (getSpecialEffect() == SpecialEffect.DRAW2 || getSpecialEffect() == SpecialEffect.REVERSE
+                || getSpecialEffect() == SpecialEffect.SKIP) {
             return "%s%s".formatted(cardColor.getColor(), specialEffect.getSpecial());
         } else {
             return "%s".formatted(specialEffect.getSpecial());
@@ -65,10 +103,10 @@ public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) 
         return null;
     }
 
-    public static List<Card> getDeck() {
+    public static ArrayList<Card> getDeck() {
         CardColor[] cardColors = CardColor.values();
         SpecialEffect[] specialEffects = SpecialEffect.values();
-        List<Card> deck = new ArrayList<>();
+        ArrayList<Card> deck = new ArrayList<>();
 
         for (CardColor color : cardColors) {
             if (color.ordinal() == 4) {
@@ -93,8 +131,16 @@ public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) 
     }
 
     public static void printDeck(List<Card> deck) {
-        int cardsInColor = (int) Math.ceil((double) deck.size() / 4);
-        for (int i = 0; i < 4; i++) {
+        int rows = 4;
+        if (deck.size() > 10 && deck.size() < 21) {
+            rows = 2;
+        } else if (deck.size() > 0 && deck.size() < 11) {
+            rows = 1;
+        }
+        int cardsInColor = (int) Math.ceil((double) deck.size() / rows);
+
+
+        for (int i = 0; i < rows; i++) {
 
             int startIndex = i * cardsInColor;
             int endIndex = startIndex + cardsInColor;
@@ -102,7 +148,7 @@ public record Card(CardColor cardColor, SpecialEffect specialEffect, int value) 
             if (endIndex > deck.size()) {
                 endIndex = deck.size();
             }
-            deck.subList(startIndex, endIndex).forEach(c -> System.out.print(c + ", "));
+            deck.subList(startIndex, endIndex).forEach(c -> System.out.printf("[%d. %s ] ", (deck.indexOf(c) + 1), c));
             System.out.println();
         }
     }

@@ -2,15 +2,17 @@ package Scenes;
 
 import Mechanics.Card;
 import Mechanics.GamesLogic;
+import Mechanics.Player;
 
 import java.util.*;
 
 public class GameScreen {
-    public Scanner scanner = new Scanner(System.in);
-    public Random random = new Random();
+    private final Scanner scanner = new Scanner(System.in);
+    private final Random random = new Random();
+    private final GamesLogic gamesLogic = new GamesLogic();
 
     public void startGameWindow() {
-        List<Card> deck = Card.getDeck();
+
         System.out.println("""
                 Welcome to an Uno-like Card Game.
                            
@@ -22,19 +24,9 @@ public class GameScreen {
             System.out.println(Info.RULES);
         }
         System.out.println("Please enter the number of players (2-10) you would like to start the game with.");
-        int amount = getValidAmount(scanner);
-        int rPlayers = choosePlayersAmount(amount);
-
-        System.out.printf("%d player(s) will play the game, and %d BOT(s).%n", ++rPlayers, amount - rPlayers);
-        List<String> playersNames = getPlayersNames(rPlayers, (amount - rPlayers));
-        List<String> shuffled = shuffleSeats(playersNames);
-        Map<String, List<Card>> playersDecks = GamesLogic.dealCards(deck, amount, shuffled);
-        Card firstCard = GamesLogic.drawCard(playersDecks.get("DECK"));
-
-        System.out.printf("%nGame begins! %s has to match first drawn card: %s", shuffled.get(0), firstCard);
     }
 
-    private int getValidAmount(Scanner scanner) {
+    public int getValidAmount(Scanner scanner) {
         int amount;
         while (true) {
             if (scanner.hasNextInt()) {
@@ -53,7 +45,7 @@ public class GameScreen {
         }
     }
 
-    private int choosePlayersAmount(int totalPlayers) {
+    public int choosePlayersAmount(int totalPlayers) {
         System.out.println("Do you want to play with other players (Y) or with BOTs only (N)?");
         char yN;
         do {
@@ -83,7 +75,7 @@ public class GameScreen {
         } while (true);
     }
 
-    private List<String> getPlayersNames(int playersAmount, int botsAmount) {
+    public List<String> getPlayersNames(int playersAmount, int botsAmount) {
 
         List<String> names = new ArrayList<>();
         String name;
@@ -102,6 +94,9 @@ public class GameScreen {
             while (true) {
                 if (name.length() > 12 || name.length() < 3) {
                     System.out.println("Unallowed name.\nTry again and enter name with at least 3 chars, up to 12 max.");
+                    name = scanner.next();
+                } else if (name.equalsIgnoreCase("deck")) {
+                    System.out.println("Unallowed name.\nTry again");
                     name = scanner.next();
                 } else if (names.contains(name)) {
                     System.out.println(name + " already in game, try different name.");
@@ -125,7 +120,7 @@ public class GameScreen {
         return names;
     }
 
-    private List<String> shuffleSeats(List<String> names) {
+    public List<String> shuffleSeats(List<String> names) {
         Collections.shuffle(names);
 
         System.out.printf("""
@@ -141,6 +136,65 @@ public class GameScreen {
                 System.out.print(" \u27A1 ");
             }
         }
+        System.out.println();
         return names;
+    }
+
+    public Card chooseCard(Card lastCard, Player player, List<Card> deck) {
+        int handSize = player.getPlayerHand().size();
+        var playersDeck = player.getPlayerHand();
+        String name = player.getName();
+        int cardIndex = 0;
+        boolean canPlay = gamesLogic.hasCardsToPlay(lastCard, player);
+
+        if (canPlay) {
+            if (handSize != 1) {
+                System.out.printf("Enter card index to play this turn ( 1 - %d ).%n", handSize);
+            } else {
+                System.out.println("Enter card index to play this turn ( 1 )");
+            }
+            Card.printDeck(playersDeck);
+            cardIndex = getCardIndex(lastCard, player, handSize, playersDeck, name);
+
+        } else {
+            System.out.println("You don't have any legal card to play, draw card.");
+            Card.printDeck(playersDeck);
+            var cardDrawn = gamesLogic.drawCard(deck, 2);
+            System.out.println("You have drawn: " + cardDrawn);
+            playersDeck.add(cardDrawn);
+            handSize++;
+
+            if (gamesLogic.areMatching(lastCard, cardDrawn)) {
+                System.out.println("Card you have drawn matches discard pile top card.");
+                Card.printDeck(playersDeck);
+                cardIndex = getCardIndex(lastCard, player, handSize, playersDeck, name);
+            }
+        }
+        return playersDeck.get(cardIndex);
+    }
+
+    private int getCardIndex(Card lastCard, Player player, int handSize, ArrayList<Card> playersDeck, String name) {
+        int cardNumber;
+        int cardIndex;
+        while (true) {
+            if (scanner.hasNextInt()) {
+                cardNumber = scanner.nextInt();
+                if (cardNumber > 0 && cardNumber < handSize + 1) {
+                    if(gamesLogic.areMatching(lastCard, player.getPlayerHand().get(--cardNumber))) {
+                        cardIndex = cardNumber;
+                        System.out.printf("%s played card: %s", name, playersDeck.get(cardIndex));
+                        break;
+                    }else{
+                        System.out.println("Provided card doesn't match top discard pile card in either value, color or special effect. Try again.");
+                    }
+                } else {
+                    System.out.printf("Card index out of bounds. Try again (1 - %d).%n", handSize);
+                }
+            } else {
+                System.out.printf("Unallowed value provided. Try again (1 - %d).%n", handSize);
+                scanner.next();
+            }
+        }
+        return cardIndex;
     }
 }
