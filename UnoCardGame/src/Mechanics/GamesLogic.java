@@ -1,17 +1,12 @@
 package Mechanics;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class GamesLogic {
 
-    public static List<List<Card>> dealCards(List<Card> deck, int playersAmount) {
+    public static Map<String, List<Card>> dealCards(List<Card> deck, int playersAmount, List<String> names) {
         Collections.shuffle(deck);
-        List<List<Card>> playersDecks = new ArrayList<>();
-
-        Card.printDeck(deck);
-        System.out.println();
+        Map<String, List<Card>> playersDecks = new LinkedHashMap<>();
 
         if (playersAmount > 1 && playersAmount < 11) {
             for (int i = 0; i < playersAmount; i++) {
@@ -20,17 +15,29 @@ public class GamesLogic {
                     playerHand.add(deck.get(j * playersAmount + i));
                 }
                 playerHand.sort(Card.sorting);
-                playersDecks.add(playerHand);
-            }
-            for(var d : playersDecks){
-                for(var c : d){
-                    deck.remove(c);
-                }
+                playersDecks.put(names.get(i), playerHand);
             }
         } else {
             System.out.println("Invalid amount of players: " + playersAmount + "\nRequired amount: 2-10");
         }
+        playersDecks.put("DECK", deck);
         return playersDecks;
     }
 
+    public static Card drawCard(List<Card> deck) {
+        Queue<Card> gDeck = new LinkedList<>(deck);
+        Card first = deck.get(0);
+
+        while (true) {
+            if (first.specialEffect() == Card.SpecialEffect.DRAW4) {
+                System.out.println("First draw card was " + Card.SpecialEffect.DRAW4 + ". Shuffling deck in process.");
+                Collections.shuffle(deck);
+                first = deck.get(0);
+            } else {
+                break;
+            }
+        }
+        first = gDeck.poll();
+        return first;
+    }
 }
