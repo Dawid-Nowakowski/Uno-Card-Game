@@ -33,12 +33,29 @@ public class GamesLogic {
         players.add(players.size(), new Player("UNDRAWN_CARDS"));
         players.get(players.size() - 1).setPlayerHand(deck);
         players.add(players.size(), new Player("DISCARD_PILE"));
+        System.out.printf("""
+                _______
+                %s%n""", players.get(players.size() - 1));
 
         return players;
     }
 
-    public Card drawCard(List<Card> deck, int turn) {
-        Queue<Card> gDeck = new LinkedList<>(deck);
+    public ArrayList<Player> dealCards(ArrayList<Card> deck, ArrayList<Player> players) {
+        Collections.shuffle(deck);
+        for (Player p : players) {
+            p.getPlayerHand().clear();
+        }
+        for (Player p : players) {
+            for (int j = 0; j < (deck.size() / players.size()); j++) {
+                p.addCard(deck.get(j * players.size() + players.indexOf(p)));
+            }
+            p.getPlayerHand().sort(Card.sorting);
+        }
+        deck.clear();
+        return players;
+    }
+
+    public Card firstCard(ArrayList<Card> deck, ArrayList<Card> discardPile, int turn) {
         Card first = deck.get(0);
 
         if (turn == 1) {
@@ -52,17 +69,79 @@ public class GamesLogic {
                 }
             }
         }
-        first = gDeck.poll();
+        deck.remove(first);
+        discardPile.add(first);
         return first;
     }
 
-    public int amountOfCards(List<Player> players, int index) {
+    public ArrayList<Card> drawCard(ArrayList<Card> deck, ArrayList<Card> discardPile, int cardsToDraw) {
+
+        Card topDiscardPile = discardPile.get(discardPile.size() - 1);
+        discardPile.remove(topDiscardPile);
+        ArrayList<Card> drawnCards = new ArrayList<>();
+        int amountToDrawAfterShuffle = cardsToDraw - deck.size();
+
+        if (deck.size() <= cardsToDraw) {
+            drawnCards.addAll(deck);
+        } else {
+            for (int i = 0; i < cardsToDraw; i++) {
+                drawnCards.add(deck.get(i));
+            }
+            for (Card c : drawnCards) {
+                deck.remove(c);
+            }
+        }
+        deck.clear();
+        deck.addAll(discardPile);
+        Collections.shuffle(deck);
+        discardPile.clear();
+        discardPile.add(topDiscardPile);
+
+        if (amountToDrawAfterShuffle > 0) {
+            for (int i = 0; i < amountToDrawAfterShuffle; i++) {
+                Card first = deck.get(0);
+                drawnCards.add(first);
+                deck.remove(first);
+            }
+        }
+
+        return drawnCards;
+    }
+
+    public int amountOfCards(ArrayList<Player> players, int index) {
         return players.get(index).getPlayerHand().size();
     }
 
-    public Player nextPlayer(List<Player> players, int next) {
+    public Player nextPlayer(ArrayList<Player> players, int next) {
+        ArrayList<Player> decks = new ArrayList<>(List.of(players.get(players.size() - 2), players.get(players.size() - 1)));
+        players.removeAll(decks);
         Collections.rotate(players, next); // -1 by default, -2 for Skip
+        players.addAll(decks);
+        players.forEach(System.out::println);
         return players.get(0);
+    }
+
+    public Player reverseCard(ArrayList<Player> players) {
+        ArrayList<Player> decks = new ArrayList<>(List.of(players.get(players.size() - 2), players.get(players.size() - 1)));
+        players.removeAll(decks);
+        Collections.reverse(players);
+        players.addAll(decks);
+        players.forEach(System.out::println);
+        return players.get(0);
+    }
+
+    public ArrayList<Player> shuffleCard(ArrayList<Player> players) {
+        ArrayList<Player> decks = new ArrayList<>(List.of(players.get(players.size() - 2), players.get(players.size() - 1)));
+        players.removeAll(decks);
+        ArrayList<Card> playersCards = new ArrayList<>();
+
+        for (Player player : players) {
+            playersCards.addAll(player.getPlayerHand());
+        }
+        players = dealCards(playersCards, players);
+        players.addAll(decks);
+
+        return players;
     }
 
     public boolean hasCardsToPlay(Card card, Player player) {

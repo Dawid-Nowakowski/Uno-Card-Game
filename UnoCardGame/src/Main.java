@@ -2,8 +2,6 @@ import Mechanics.Card;
 import Mechanics.GamesLogic;
 import Mechanics.Player;
 import Scenes.GameScreen;
-import Scenes.Info;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -11,10 +9,11 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
-        
+
         playGame();
 
     }
+
     public static void playGame() {
         Scanner scanner = new Scanner(System.in);
         ArrayList<Card> deck = Card.getDeck();
@@ -29,13 +28,18 @@ public class Main {
         List<String> shuffled = gameScreen.shuffleSeats(playersNames);
 
         int turn = 1;
-        List<Player> players = gamesLogic.dealCards(deck, amount, shuffled);
+        ArrayList<Player> players = gamesLogic.dealCards(deck, amount, shuffled);
+
+        ArrayList<Card> unplayedCards = players.get(players.size() - 2).getPlayerHand();
+        ArrayList<Card> discardPile = players.get(players.size() - 1).getPlayerHand();
+
+        Card draw = gamesLogic.firstCard(unplayedCards, discardPile, turn);
         players.forEach(System.out::println);
-        List<Card> unplayedCards = players.get(players.size() - 2).getPlayerHand();
-        Card draw = gamesLogic.drawCard(players.get(players.size() - 2).getPlayerHand(), turn);
 
         System.out.printf("%nGame begins! %s has to match first drawn card: %s%n", shuffled.get(0), draw);
-        gameScreen.chooseCard(draw, players.get(0), unplayedCards);
+        gameScreen.chooseCard(draw, players.get(0), unplayedCards, discardPile);
+        System.out.println();
+        Card.printDeck(discardPile);
     }
 }
 
