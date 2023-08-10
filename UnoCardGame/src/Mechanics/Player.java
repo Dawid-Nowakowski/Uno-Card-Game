@@ -56,6 +56,4 @@ public class Player {
     public String toString() {
         return name + ", score: " + score + ", hand=" + playerHand;
     }
-
-
 }

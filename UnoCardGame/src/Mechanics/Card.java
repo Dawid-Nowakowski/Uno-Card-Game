@@ -16,6 +16,12 @@ public class Card {
         this.value = value;
     }
 
+    public Card(CardColor cardColor){
+        this.cardColor = cardColor;
+        specialEffect = SpecialEffect.NONE;
+        value = -1;
+    }
+
     public CardColor getCardColor() {
         return cardColor;
     }

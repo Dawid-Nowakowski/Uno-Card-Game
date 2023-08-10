@@ -6,7 +6,6 @@ public class GamesLogic {
 
     public ArrayList<Player> dealCards(ArrayList<Card> deck, int playersAmount, List<String> names) {
         Collections.shuffle(deck);
-        Card.printDeck(deck);
         ArrayList<Player> players = new ArrayList<>();
 
         if (playersAmount > 1 && playersAmount < 11) {
@@ -33,11 +32,27 @@ public class GamesLogic {
         players.add(players.size(), new Player("UNDRAWN_CARDS"));
         players.get(players.size() - 1).setPlayerHand(deck);
         players.add(players.size(), new Player("DISCARD_PILE"));
-        System.out.printf("""
-                _______
-                %s%n""", players.get(players.size() - 1));
 
         return players;
+    }
+
+    public ArrayList<Player> playersOrDecks(ArrayList<Player> players, int choice){
+        ArrayList<Player> decks = new ArrayList<>();
+        if(choice == 1){
+            players.remove(players.get(players.size() - 1));
+            players.remove(players.get(players.size() - 1));
+            return players;
+        }else {
+            decks.add(players.get(players.size() - 2));
+            decks.add(players.get(players.size() - 1));
+            return decks;
+        }
+    }
+    public ArrayList<Card> deckOrDiscard(ArrayList<Player> list, int choice){
+        if(choice == 1){
+            return list.get(0).getPlayerHand();
+        }
+        return list.get(1).getPlayerHand();
     }
 
     public ArrayList<Player> dealCards(ArrayList<Card> deck, ArrayList<Player> players) {
@@ -55,18 +70,16 @@ public class GamesLogic {
         return players;
     }
 
-    public Card firstCard(ArrayList<Card> deck, ArrayList<Card> discardPile, int turn) {
+    public Card firstCard(ArrayList<Card> deck, ArrayList<Card> discardPile) {
         Card first = deck.get(0);
 
-        if (turn == 1) {
-            while (true) {
-                if (first.getSpecialEffect() == Card.SpecialEffect.DRAW4) {
-                    System.out.println("The first card drawn is " + Card.SpecialEffect.DRAW4 + ". Shuffling deck in process.");
-                    Collections.shuffle(deck);
-                    first = deck.get(0);
-                } else {
-                    break;
-                }
+        while (true) {
+            if (first.getSpecialEffect() == Card.SpecialEffect.DRAW4) {
+                System.out.println("The first card drawn is " + Card.SpecialEffect.DRAW4 + ". Shuffling deck in process.");
+                Collections.shuffle(deck);
+                first = deck.get(0);
+            } else {
+                break;
             }
         }
         deck.remove(first);
@@ -83,28 +96,24 @@ public class GamesLogic {
 
         if (deck.size() <= cardsToDraw) {
             drawnCards.addAll(deck);
+            deck.clear();
+            deck.addAll(discardPile);
+            Collections.shuffle(deck);
+            discardPile.clear();
+            discardPile.add(topDiscardPile);
+
+            if (amountToDrawAfterShuffle > 0) {
+                for (int i = 0; i < amountToDrawAfterShuffle; i++) {
+                    drawnCards.add(deck.get(0));
+                    deck.remove(deck.get(0));
+                }
+            }
         } else {
             for (int i = 0; i < cardsToDraw; i++) {
-                drawnCards.add(deck.get(i));
-            }
-            for (Card c : drawnCards) {
-                deck.remove(c);
+                drawnCards.add(deck.get(0));
+                deck.remove(deck.get(0));
             }
         }
-        deck.clear();
-        deck.addAll(discardPile);
-        Collections.shuffle(deck);
-        discardPile.clear();
-        discardPile.add(topDiscardPile);
-
-        if (amountToDrawAfterShuffle > 0) {
-            for (int i = 0; i < amountToDrawAfterShuffle; i++) {
-                Card first = deck.get(0);
-                drawnCards.add(first);
-                deck.remove(first);
-            }
-        }
-
         return drawnCards;
     }
 
@@ -113,33 +122,36 @@ public class GamesLogic {
     }
 
     public Player nextPlayer(ArrayList<Player> players, int next) {
-        ArrayList<Player> decks = new ArrayList<>(List.of(players.get(players.size() - 2), players.get(players.size() - 1)));
-        players.removeAll(decks);
         Collections.rotate(players, next); // -1 by default, -2 for Skip
-        players.addAll(decks);
         players.forEach(System.out::println);
         return players.get(0);
     }
 
     public Player reverseCard(ArrayList<Player> players) {
-        ArrayList<Player> decks = new ArrayList<>(List.of(players.get(players.size() - 2), players.get(players.size() - 1)));
-        players.removeAll(decks);
         Collections.reverse(players);
-        players.addAll(decks);
         players.forEach(System.out::println);
         return players.get(0);
     }
 
+    public Card.CardColor wildCard(int index) {
+        return switch (index) {
+            case 1 -> Card.CardColor.BLUE;
+            case 2 -> Card.CardColor.GREEN;
+            case 3 -> Card.CardColor.RED;
+            case 4 -> Card.CardColor.YELLOW;
+            default -> throw new IllegalArgumentException("Unallowed value: " + index);
+        };
+    }
+
     public ArrayList<Player> shuffleCard(ArrayList<Player> players) {
-        ArrayList<Player> decks = new ArrayList<>(List.of(players.get(players.size() - 2), players.get(players.size() - 1)));
-        players.removeAll(decks);
         ArrayList<Card> playersCards = new ArrayList<>();
 
         for (Player player : players) {
             playersCards.addAll(player.getPlayerHand());
         }
+        nextPlayer(players, -1);
         players = dealCards(playersCards, players);
-        players.addAll(decks);
+        nextPlayer(players, 1);
 
         return players;
     }
@@ -153,10 +165,14 @@ public class GamesLogic {
     }
 
     public boolean areMatching(Card card, Card card2) {
-        return Card.matchingColor.compare(card2, card) == 0 ||
-                Card.matchingValue.compare(card2, card) == 0 ||
-                (Card.matchingSE.compare(card2, card) == 0 &&
+        if (Card.matchingColor.compare(card, card2) == 0 ||
+                (Card.matchingSE.compare(card, card2) == 0 &&
                         (card.getSpecialEffect() != Card.SpecialEffect.NONE &&
-                                card2.getSpecialEffect() != Card.SpecialEffect.NONE));
+                                card2.getSpecialEffect() != Card.SpecialEffect.NONE))) {
+            return true;
+        } else if (Card.matchingValue.compare(card, card2) == 0 &&
+                card.getSpecialEffect() == Card.SpecialEffect.NONE) {
+            return true;
+        } else return card2.getValue() > 39;
     }
 }

@@ -144,7 +144,6 @@ public class GameScreen {
         int handSize = player.getPlayerHand().size();
         var playersDeck = player.getPlayerHand();
         String name = player.getName();
-        int cardIndex = 0;
         boolean canPlay = gamesLogic.hasCardsToPlay(lastCard, player);
 
         if (canPlay) {
@@ -154,7 +153,7 @@ public class GameScreen {
                 System.out.println("Enter card index to play this turn ( 1 )");
             }
             Card.printDeck(playersDeck);
-            cardIndex = getCardIndex(lastCard, player, handSize, playersDeck, name, discardPile);
+            return playersDeck.get(getCardIndex(lastCard, player, handSize, name, discardPile));
 
         } else {
             System.out.println("You don't have any legal card to play, draw card.");
@@ -167,13 +166,13 @@ public class GameScreen {
             if (cardDrawn.size() == 1 && gamesLogic.areMatching(lastCard, cardDrawn.get(0))) {
                 System.out.println("Card you have drawn matches discard pile top card.");
                 Card.printDeck(playersDeck);
-                cardIndex = getCardIndex(lastCard, player, handSize, playersDeck, name, discardPile);
+                return playersDeck.get(getCardIndex(lastCard, player, handSize, name, discardPile));
             }
         }
-        return playersDeck.get(cardIndex);
+        return lastCard;
     }
 
-    private int getCardIndex(Card lastCard, Player player, int handSize, ArrayList<Card> playersDeck, String name, ArrayList<Card> discardPile) {
+    private int getCardIndex(Card lastCard, Player player, int handSize, String name, ArrayList<Card> discardPile) {
         int cardNumber;
         int cardIndex;
         while (true) {
@@ -182,8 +181,9 @@ public class GameScreen {
                 if (cardNumber > 0 && cardNumber < handSize + 1) {
                     if (gamesLogic.areMatching(lastCard, player.getPlayerHand().get(--cardNumber))) {
                         cardIndex = cardNumber;
-                        System.out.printf("%s played card: %s", name, playersDeck.get(cardIndex));
-                        discardPile.add(playersDeck.get(cardIndex));
+                        System.out.printf("%s played card: %s%n", name, player.getPlayerHand().get(cardIndex));
+                        discardPile.add(player.getPlayerHand().get(cardIndex));
+                        player.getPlayerHand().remove(cardIndex);
                         break;
                     } else {
                         System.out.println("Provided card doesn't match top discard pile card in either value, color or special effect. Try again.");
@@ -197,5 +197,24 @@ public class GameScreen {
             }
         }
         return cardIndex;
+    }
+
+    public Card chooseColor() {
+        int index;
+        System.out.println("""
+                        1. \uD83D\uDD35    2. \uD83D\uDFE2    3. \uD83D\uDD34    4. \uD83D\uDFE1
+                Enter a color index to set it as required for the next turn.""");
+        while (true) {
+            if (scanner.hasNextInt()) {
+                index = scanner.nextInt();
+                if (index > 0 && index < 5) {
+                    Card chosenColor = new Card(gamesLogic.wildCard(index));
+                    System.out.println("Chosen color is: " + chosenColor.getCardColor().getColor());
+                    return chosenColor;
+                } else {
+                    System.out.println("Unallowed value, try again.");
+                }
+            }
+        }
     }
 }
