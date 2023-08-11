@@ -153,7 +153,7 @@ public class GameScreen {
                 System.out.println("Enter card index to play this turn ( 1 )");
             }
             Card.printDeck(playersDeck);
-            return playersDeck.get(getCardIndex(lastCard, player, handSize, name, discardPile));
+            return getCardIndex(lastCard, player, handSize, name, discardPile);
 
         } else {
             System.out.println("You don't have any legal card to play, draw card.");
@@ -166,24 +166,29 @@ public class GameScreen {
             if (cardDrawn.size() == 1 && gamesLogic.areMatching(lastCard, cardDrawn.get(0))) {
                 System.out.println("Card you have drawn matches discard pile top card.");
                 Card.printDeck(playersDeck);
-                return playersDeck.get(getCardIndex(lastCard, player, handSize, name, discardPile));
+                return getCardIndex(lastCard, player, handSize, name, discardPile);
             }
         }
         return lastCard;
     }
 
-    private int getCardIndex(Card lastCard, Player player, int handSize, String name, ArrayList<Card> discardPile) {
+    private Card getCardIndex(Card lastCard, Player player, int handSize, String name, ArrayList<Card> discardPile) {
         int cardNumber;
         int cardIndex;
+        Card playedCard;
+        Card rainbowCard;
         while (true) {
             if (scanner.hasNextInt()) {
                 cardNumber = scanner.nextInt();
                 if (cardNumber > 0 && cardNumber < handSize + 1) {
                     if (gamesLogic.areMatching(lastCard, player.getPlayerHand().get(--cardNumber))) {
                         cardIndex = cardNumber;
-                        System.out.printf("%s played card: %s%n", name, player.getPlayerHand().get(cardIndex));
-                        discardPile.add(player.getPlayerHand().get(cardIndex));
+                        playedCard = player.getPlayerHand().get(cardIndex);
+                        System.out.printf("%s played card: %s%n", name, playedCard);
+                        rainbowCard = checkForRainbow(playedCard);
+                        discardPile.add(playedCard);
                         player.getPlayerHand().remove(cardIndex);
+                        playedCard = rainbowCard;
                         break;
                     } else {
                         System.out.println("Provided card doesn't match top discard pile card in either value, color or special effect. Try again.");
@@ -196,7 +201,7 @@ public class GameScreen {
                 scanner.next();
             }
         }
-        return cardIndex;
+        return playedCard;
     }
 
     public Card chooseColor() {
@@ -216,5 +221,13 @@ public class GameScreen {
                 }
             }
         }
+    }
+
+    public Card checkForRainbow(Card card){
+        switch (card.getSpecialEffect()){
+            case DRAW4, SHUFFLE, WILD -> card = chooseColor();
+            default -> {}
+        }
+        return card;
     }
 }

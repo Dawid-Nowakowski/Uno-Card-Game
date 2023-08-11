@@ -4,7 +4,7 @@ import java.util.*;
 
 public class GamesLogic {
 
-    public ArrayList<Player> dealCards(ArrayList<Card> deck, int playersAmount, List<String> names) {
+    public ArrayList<Player> setPlayers(ArrayList<Card> deck, int playersAmount, List<String> names) {
         Collections.shuffle(deck);
         ArrayList<Player> players = new ArrayList<>();
 
@@ -36,20 +36,21 @@ public class GamesLogic {
         return players;
     }
 
-    public ArrayList<Player> playersOrDecks(ArrayList<Player> players, int choice){
+    public ArrayList<Player> playersOrDecks(ArrayList<Player> players, int choice) {
         ArrayList<Player> decks = new ArrayList<>();
-        if(choice == 1){
+        if (choice == 1) {
             players.remove(players.get(players.size() - 1));
             players.remove(players.get(players.size() - 1));
             return players;
-        }else {
+        } else {
             decks.add(players.get(players.size() - 2));
             decks.add(players.get(players.size() - 1));
             return decks;
         }
     }
-    public ArrayList<Card> deckOrDiscard(ArrayList<Player> list, int choice){
-        if(choice == 1){
+
+    public ArrayList<Card> deckOrDiscard(ArrayList<Player> list, int choice) {
+        if (choice == 1) {
             return list.get(0).getPlayerHand();
         }
         return list.get(1).getPlayerHand();
@@ -123,13 +124,22 @@ public class GamesLogic {
 
     public Player nextPlayer(ArrayList<Player> players, int next) {
         Collections.rotate(players, next); // -1 by default, -2 for Skip
-        players.forEach(System.out::println);
         return players.get(0);
     }
 
     public Player reverseCard(ArrayList<Player> players) {
         Collections.reverse(players);
         players.forEach(System.out::println);
+        System.out.println("Reverse card has been played. Actual order of play is:");
+        for (int i = 1; i < players.size(); i++) {
+            if (i == 1) {
+                System.out.print(" \u27A1 ");
+            }
+            System.out.print(players.get(i).getName());
+            if (i != (players.size() - 1)) {
+                System.out.print(" \u27A1 ");
+            }
+        }
         return players.get(0);
     }
 
@@ -152,7 +162,7 @@ public class GamesLogic {
         nextPlayer(players, -1);
         players = dealCards(playersCards, players);
         nextPlayer(players, 1);
-
+        System.out.println("Shuffle card has been played. Each player hand are collected, shuffled and dealt evenly.");
         return players;
     }
 
@@ -174,5 +184,25 @@ public class GamesLogic {
                 card.getSpecialEffect() == Card.SpecialEffect.NONE) {
             return true;
         } else return card2.getValue() > 39;
+    }
+
+    public Card action(Card lastCard, Player player, ArrayList<Card> deck, ArrayList<Card> discardPile, ArrayList<Player> players) {
+
+        switch (lastCard.getSpecialEffect()) {
+            case DRAW2 -> {
+                player.addCards(drawCard(deck, discardPile, 2));
+                nextPlayer(players, -1);
+            }
+            case DRAW4 -> {
+                player.addCards(drawCard(deck, discardPile, 4));
+                nextPlayer(players, -1);
+            }
+            case REVERSE -> reverseCard(players);
+            case SHUFFLE -> shuffleCard(players);
+            case SKIP -> nextPlayer(players, -1);
+            default -> {
+            }
+        }
+        return lastCard;
     }
 }
