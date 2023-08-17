@@ -10,7 +10,7 @@ public class GamesLogic {
 
         if (playersAmount > 1 && playersAmount < 11) {
             for (int i = 0; i < playersAmount; i++) {
-                players.add(i, new Player(names.get(i)));
+                players.add(new Player(names.get(i)));
                 if (names.get(i).startsWith("(BOT)", names.get(i).length() - 5)) {
                     players.get(i).setBot();
                 }
@@ -29,9 +29,9 @@ public class GamesLogic {
         } else {
             System.out.println("Invalid amount of players: " + playersAmount + "\nRequired amount: 2-10");
         }
-        players.add(players.size(), new Player("UNDRAWN_CARDS"));
+        players.add(new Player("UNDRAWN_CARDS"));
         players.get(players.size() - 1).setPlayerHand(deck);
-        players.add(players.size(), new Player("DISCARD_PILE"));
+        players.add(new Player("DISCARD_PILE"));
 
         return players;
     }
@@ -51,9 +51,9 @@ public class GamesLogic {
 
     public ArrayList<Card> deckOrDiscard(ArrayList<Player> list, int choice) {
         if (choice == 1) {
-            return list.get(0).getPlayerHand();
+            return list.get(0).getPlayerHand(); // returns remaining, unplayed cards
         }
-        return list.get(1).getPlayerHand();
+        return list.get(1).getPlayerHand(); // returns empty discard pile
     }
 
     public ArrayList<Player> dealCards(ArrayList<Card> deck, ArrayList<Player> players) {
@@ -63,41 +63,26 @@ public class GamesLogic {
         }
         for (Player p : players) {
             for (int j = 0; j < (deck.size() / players.size()); j++) {
-                p.addCard(deck.get(j * players.size() + players.indexOf(p)));
+                p.addCard(deck.get(j * players.size() + players.indexOf(p))); // deals each player 7 cards, 1 card every n-time (n - number of players) so such method deals in similar way to dealing each player 1 card at a time
             }
             p.getPlayerHand().sort(Card.sorting);
         }
         deck.clear();
         return players;
     }
-
-    public Card firstCard(ArrayList<Card> deck, ArrayList<Card> discardPile) {
-        Card first = deck.get(0);
-
-        while (true) {
-            if (first.getSpecialEffect() == Card.SpecialEffect.DRAW4) {
-                System.out.println("The first card drawn is " + Card.SpecialEffect.DRAW4 + ". Shuffling deck in process.");
-                Collections.shuffle(deck);
-                first = deck.get(0);
-            } else {
-                break;
-            }
-        }
-        deck.remove(first);
-        discardPile.add(first);
-        return first;
-    }
-
+    
     public ArrayList<Card> drawCard(ArrayList<Card> deck, ArrayList<Card> discardPile, int cardsToDraw) {
 
-        Card topDiscardPile = discardPile.get(discardPile.size() - 1);
-        discardPile.remove(topDiscardPile);
+
         ArrayList<Card> drawnCards = new ArrayList<>();
         int amountToDrawAfterShuffle = cardsToDraw - deck.size();
 
         if (deck.size() <= cardsToDraw) {
             drawnCards.addAll(deck);
             deck.clear();
+            Card topDiscardPile = discardPile.get(discardPile.size() - 1);
+            discardPile.remove(topDiscardPile);
+            discardPile.removeIf(c -> c.getValue() == -1);
             deck.addAll(discardPile);
             Collections.shuffle(deck);
             discardPile.clear();
@@ -118,8 +103,8 @@ public class GamesLogic {
         return drawnCards;
     }
 
-    public int amountOfCards(ArrayList<Player> players, int index) {
-        return players.get(index).getPlayerHand().size();
+    public int amountOfCards(ArrayList<Player> players) {
+        return players.get(0).getPlayerHand().size();
     }
 
     public Player nextPlayer(ArrayList<Player> players, int next) {
@@ -129,7 +114,6 @@ public class GamesLogic {
 
     public Player reverseCard(ArrayList<Player> players) {
         Collections.reverse(players);
-        players.forEach(System.out::println);
         System.out.println("Reverse card has been played. Actual order of play is:");
         for (int i = 1; i < players.size(); i++) {
             if (i == 1) {
@@ -140,6 +124,7 @@ public class GamesLogic {
                 System.out.print(" \u27A1 ");
             }
         }
+        System.out.println();
         return players.get(0);
     }
 
@@ -175,10 +160,11 @@ public class GamesLogic {
     }
 
     public boolean areMatching(Card card, Card card2) {
-        if (Card.matchingColor.compare(card, card2) == 0 ||
-                (Card.matchingSE.compare(card, card2) == 0 &&
-                        (card.getSpecialEffect() != Card.SpecialEffect.NONE &&
-                                card2.getSpecialEffect() != Card.SpecialEffect.NONE))) {
+        if (Card.matchingColor.compare(card, card2) == 0) {
+            return true;
+        } else if (Card.matchingSE.compare(card, card2) == 0 &&
+                (card.getSpecialEffect() != Card.SpecialEffect.NONE &&
+                        card2.getSpecialEffect() != Card.SpecialEffect.NONE)) {
             return true;
         } else if (Card.matchingValue.compare(card, card2) == 0 &&
                 card.getSpecialEffect() == Card.SpecialEffect.NONE) {
@@ -205,4 +191,5 @@ public class GamesLogic {
         }
         return lastCard;
     }
+
 }

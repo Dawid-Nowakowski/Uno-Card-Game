@@ -153,7 +153,7 @@ public class GameScreen {
                 System.out.println("Enter card index to play this turn ( 1 )");
             }
             Card.printDeck(playersDeck);
-            return getCardIndex(lastCard, player, handSize, name, discardPile);
+            return getCardIndex(lastCard, player, discardPile);
 
         } else {
             System.out.println("You don't have any legal card to play, draw card.");
@@ -161,34 +161,33 @@ public class GameScreen {
             var cardDrawn = gamesLogic.drawCard(deck, discardPile, 1);
             System.out.println("You have drawn: " + cardDrawn);
             playersDeck.addAll(cardDrawn);
-            handSize++;
 
             if (cardDrawn.size() == 1 && gamesLogic.areMatching(lastCard, cardDrawn.get(0))) {
                 System.out.println("Card you have drawn matches discard pile top card.");
                 Card.printDeck(playersDeck);
-                return getCardIndex(lastCard, player, handSize, name, discardPile);
+                return getCardIndex(lastCard, player, discardPile);
             }
         }
         return lastCard;
     }
 
-    private Card getCardIndex(Card lastCard, Player player, int handSize, String name, ArrayList<Card> discardPile) {
+    private Card getCardIndex(Card lastCard, Player player, ArrayList<Card> discardPile) {
         int cardNumber;
-        int cardIndex;
+        int handSize = player.getPlayerHand().size();
         Card playedCard;
         Card rainbowCard;
+        String name = player.getName();
         while (true) {
             if (scanner.hasNextInt()) {
-                cardNumber = scanner.nextInt();
-                if (cardNumber > 0 && cardNumber < handSize + 1) {
-                    if (gamesLogic.areMatching(lastCard, player.getPlayerHand().get(--cardNumber))) {
-                        cardIndex = cardNumber;
-                        playedCard = player.getPlayerHand().get(cardIndex);
+                cardNumber = scanner.nextInt() - 1;
+                if (cardNumber > -1 && cardNumber < handSize) {
+                    if (gamesLogic.areMatching(lastCard, player.getPlayerHand().get(cardNumber))) {
+                        playedCard = player.getPlayerHand().get(cardNumber);
                         System.out.printf("%s played card: %s%n", name, playedCard);
                         rainbowCard = checkForRainbow(playedCard);
-                        discardPile.add(playedCard);
-                        player.getPlayerHand().remove(cardIndex);
+                        player.getPlayerHand().remove(cardNumber);
                         playedCard = rainbowCard;
+                        discardPile.add(playedCard);
                         break;
                     } else {
                         System.out.println("Provided card doesn't match top discard pile card in either value, color or special effect. Try again.");
@@ -229,5 +228,49 @@ public class GameScreen {
             default -> {}
         }
         return card;
+    }
+
+    public Card firstCard(ArrayList<Card> deck, ArrayList<Card> discardPile, ArrayList<Player> players) {
+        Card first = deck.get(0);
+        System.out.print("The first card drawn is ");
+        while (true) {
+            if (first.getSpecialEffect() == Card.SpecialEffect.DRAW4) {
+                System.out.println(Card.SpecialEffect.DRAW4 + ". Shuffling deck in process.");
+                Collections.shuffle(deck);
+                first = deck.get(0);
+            } else if (first.getSpecialEffect() == Card.SpecialEffect.SKIP) {
+                gamesLogic.nextPlayer(players, -1);
+                System.out.println(Card.SpecialEffect.SKIP + ". First player skips turn. Next players turn.");
+                break;
+            } else if (first.getSpecialEffect() == Card.SpecialEffect.DRAW2) {
+                players.get(0).addCards(gamesLogic.drawCard(deck, discardPile, 2));
+                System.out.println(Card.SpecialEffect.DRAW2 + ". First player draws 2 cards and skips turn. Next players turn.");
+                break;
+            } else if (first.getSpecialEffect() == Card.SpecialEffect.REVERSE) {
+                System.out.println(Card.SpecialEffect.REVERSE);
+                gamesLogic.reverseCard(players);
+                break;
+            } else if (first.getSpecialEffect() == Card.SpecialEffect.SHUFFLE) {
+                System.out.println(Card.SpecialEffect.SHUFFLE);
+                gamesLogic.shuffleCard(players);
+                deck.remove(first);
+                discardPile.add(first);
+                first = chooseColor();
+                break;
+            } else if (first.getSpecialEffect() == Card.SpecialEffect.WILD){
+                System.out.println(Card.SpecialEffect.WILD);
+                deck.remove(first);
+                discardPile.add(first);
+                first = chooseColor();
+                break;
+            } else if (first.getSpecialEffect() == Card.SpecialEffect.NONE) {
+                break;
+            }
+        }
+        if (first.getValue() != -1) {
+            deck.remove(first);
+        }
+        discardPile.add(first);
+        return first;
     }
 }

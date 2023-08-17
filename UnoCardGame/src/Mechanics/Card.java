@@ -15,7 +15,6 @@ public class Card {
         this.specialEffect = specialEffect;
         this.value = value;
     }
-
     public Card(CardColor cardColor){
         this.cardColor = cardColor;
         specialEffect = SpecialEffect.NONE;

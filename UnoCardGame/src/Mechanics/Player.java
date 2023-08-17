@@ -29,7 +29,7 @@ public class Player {
     }
 
     public void setScore(int score) {
-        this.score = score;
+        this.score += score;
     }
 
     public ArrayList<Card> getPlayerHand() {
@@ -42,6 +42,10 @@ public class Player {
 
     public void addCard(Card card) {
         getPlayerHand().add(card);
+    }
+
+    public void addCards(ArrayList<Card> cards){
+        getPlayerHand().addAll(cards);
     }
 
     public boolean isBot() {
